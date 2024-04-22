@@ -78,11 +78,7 @@ function parse(tokens) {
                 error = `Ошибка, перед терминалом "конец слагаемого" должно идти хотя бы одно целое`;
                 break;
             }
-            if (isValidPer(tokens[i]) && tokens[i+1] === undefined && tokens[i] !== lexemes.MN.SECOND) {
-                error = `Ошибка, после переменной ожидалось либо целое, либо второе`;
-                break;
-            }
-            if(isValidCel(tokens[i]) && isValidPer(tokens[i-1]) && tokens[i+1]){
+            if(isValidCel(tokens[i]) && isValidPer(tokens[i-1])){
                 i--;
                 tokens[index] = 'slag';
                 continue;
@@ -99,11 +95,13 @@ function parse(tokens) {
             if (!isValidPer(tokens[i]) && tokens[i] !== ',') {
                 error = `Ошибка, неправильно написанная переменная`;
                 break;
-            } else if (isValidPer(tokens[i]) && tokens[i] !== lexemes.MN.SECOND) {
-                continue
             }
             if (tokens[i] === ',' && tokens[i + 1] === undefined) {
                 error = `Ошибка, после ${tokens[i]} ожидалась переменная`;
+                break;
+            }
+            if (isValidPer(tokens[i]) && tokens[i+1] === undefined && tokens[i] !== lexemes.MN.SECOND) {
+                error = `Ошибка, после переменной ожидалось либо целое, либо второе`;
                 break;
             }
         }
@@ -116,24 +114,29 @@ function parse(tokens) {
             continue;
         }
         if(tokens[index] === lexemes.MN.SECOND) {
-            if(!isValidCel(tokens[i]) && (tokens[i] !== 'конец'  || tokens[i] !== 'слагаемого')) {
-                error = `Ошибка, неправильно написано целое число`;
-                break;
-            }
             if((tokens[i-1] === tokens[index]) && tokens[i+1] === undefined){
                 error = `Ошибка, должно быть написано хотя бы ещё одно целое число`;
+                break;
+            }
+            if((/[^0-9]/).test(tokens[i]) && (tokens[i] !== 'конец' || tokens[i] !== 'слагаемого' )) {
+                error = `Ошибка, после целого не может идти какой-либо символ`;
+                break;
+            }
+            if (isValidCel(tokens[i]) && (tokens[i+1]) === 'конец' && tokens[i-1] !== lexemes.MN.SECOND) {
+                //i--;
+                tokens[index] = 'slag';
+                continue;
+            }
+            if(!isValidCel(tokens[i])) {
+                error = `Ошибка, неправильно написано целое число`;
                 break;
             }
             if (isValidCel(tokens[i]) && tokens[i+1] === undefined ) {
                 error = `Ошибка, ожидался переход в слагаемое`;
                 break;
-            } else if (isValidCel(tokens[i])) {
+            } else if (isValidCel(tokens[i]) && tokens[i+1] === ',') {
                 tokens[index] = 'slag';
                 continue;
-            }
-            if((/[^0-9]/).test(tokens[i]) && (tokens[i] !== 'конец' || tokens[i] !== 'слагаемого' )) {
-                error = `Ошибка, после целого не может идти какой-либо символ`;
-                break;
             }
         }
         if(tokens[index] === 'slag') {
@@ -144,7 +147,7 @@ function parse(tokens) {
                 error = `Ошибка, ожидался терминал "конец слагаемого"` // он будет всегда её выводить, так что пока всё работает нормально
                 continue;
             }
-            if(tokens[i] === ',' && tokens[i+1] === undefined) {
+            if(tokens[i] === ',' && !(/[0-7]/.test(tokens[i+1]))) {
                 error = `Ошибка, после запятой должно идти целое`;
                 break
             }
