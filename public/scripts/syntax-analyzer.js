@@ -33,7 +33,7 @@ function isValidCel(number){
 
 function parse(tokens) {
     let index = 1;
-    let error = '';
+    let error=[];
     let mark = false;
     let per = false;
     let flagMn = false;
@@ -45,12 +45,14 @@ function parse(tokens) {
     for (let i = 0; i < tokens.length; i++) {
         console.clear();
         if (i === 0 && lexemes.BEGIN !== tokens[0] && flagBegin === false) {
-            error = `Ошибка в слове ${tokens[i]}, ожидался терминал "начало"`;
-            break;
+            error[0] = `Ошибка в слове ${tokens[i]}, ожидался терминал "начало"`;
+            error[1] = tokens[i];
+            return error;
         } else if (lexemes.BEGIN === tokens[i] && flagBegin === false) {
             if (lexemes.MN.FIRST !== tokens[index] && lexemes.MN.SECOND !== tokens[index] && tokens[index-1] === lexemes.BEGIN) {
-                error = `Ошибка, после 'начало' ожидалось либо "первое", либо "второе"`;
-                break;
+                error[0] = `Ошибка, после 'начало' ожидалось либо "первое", либо "второе"`;
+                error[1] = tokens[index] ?? tokens[i];
+                return error;
             }
             continue;
         }
@@ -58,24 +60,28 @@ function parse(tokens) {
             flagBegin = true;
             index = i;
             if(tokens[i+1] === lexemes.MN.FIRST || tokens[i+1] === lexemes.MN.SECOND) {
-                error = 'Ошибка, два терминала идущих подряд';
-                break;
+                error[0] = 'Ошибка, два терминала идущих подряд';
+                error[1] = tokens[i+1];
+                return error;
             }
             if ((lexemes.MN.FIRST === tokens[i] && tokens[i+1] === undefined) || (lexemes.MN.FIRST === tokens[i] && !isValidPer(tokens[i+1]))) {
-                error = `Ошибка, после ${tokens[index]} ожидалась переменная`;
-                break;
+                error[0] = `Ошибка, после ${tokens[index]} ожидалась переменная`;
+                error[1] = tokens[i+1] ?? tokens[i];
+                return error;
             }
             continue;
         }
         if(tokens[index] === lexemes.MN.FIRST && flagMn === false) {
             flagBegin = true;
             if(tokens[i] === lexemes.BEGIN) {
-                error = `Ошибка, из множества нельзя писать терминал "начало"`;
-                break;
+                error[0] = `Ошибка, из множества нельзя писать терминал "начало"`;
+                error[1] = tokens[i];
+                return error;
             }
             if((tokens[i] === 'конец' || tokens[i] === 'слагаемого') && !isValidCel(tokens[i-1])){
-                error = `Ошибка, перед терминалом "конец слагаемого" должно идти хотя бы одно целое`;
-                break;
+                error[0] = `Ошибка, перед терминалом "конец слагаемого" должно идти хотя бы одно целое`;
+                error[1] = tokens[i-1];
+                return error;
             }
             if(isValidCel(tokens[i]) && isValidPer(tokens[i-1])){
                 i--;
@@ -88,42 +94,50 @@ function parse(tokens) {
                 continue;
             }
             if (tokens[i] !== ',' && isValidPer(tokens[i - 1]) && tokens[i].match(/.*/) && tokens[i - 1] !== tokens[index] && tokens[i] !== lexemes.MN.SECOND) {
-                error = `Ошибка, переменные должны идти через запятую`;
-                break;
+                error[0] = `Ошибка, переменные должны идти через запятую`;
+                error[1] = tokens[i];
+                return error;
             }
             if (!isValidPer(tokens[i]) && tokens[i] !== ',') {
-                error = `Ошибка, неправильно написанная переменная`;
-                break;
+                error[0] = `Ошибка, неправильно написанная переменная`;
+                error[1] = tokens[i];
+                return error;
             }
             if (tokens[i] === ',' && tokens[i + 1] === undefined) {
-                error = `Ошибка, после ${tokens[i]} ожидалась переменная`;
-                break;
+                error[0] = `Ошибка, после ${tokens[i]} ожидалась переменная`;
+                error[1] = tokens[i];
+                return error;
             }
             if (isValidPer(tokens[i]) && tokens[i+1] === undefined && tokens[i] !== lexemes.MN.SECOND) {
-                error = `Ошибка, после переменной ожидалось либо целое, либо второе`;
-                break;
+                error[0] = `Ошибка, после переменной ожидалось либо целое, либо второе`;
+                error[1] = tokens[i];
+                return error;
             }
         }
         if (lexemes.MN.SECOND === tokens[i] && flagMn === false) {
             index = i;
             if ((lexemes.MN.SECOND === tokens[i] && tokens[i+1] === undefined) || (lexemes.MN.SECOND === tokens[i] && !isValidCel(tokens[i+1])) && tokens[index] !== 'slag') {
-                error = `Ошибка, после ${tokens[index]} ожидалось целое`;
-                break;
+                error[0] = `Ошибка, после ${tokens[index]} ожидалось целое`;
+                error[1] = tokens[index];
+                return error;
             }
             continue;
         }
         if(tokens[index] === lexemes.MN.SECOND && flagMn === false) {
             if(tokens[i] === lexemes.BEGIN) {
-                error = `Ошибка, из множества нельзя писать терминал "начало"`;
-                break;
+                error[0] = `Ошибка, из множества нельзя писать терминал "начало"`;
+                error[1] = tokens[i];
+                return error;
             }
             if((tokens[i-1] === tokens[index]) && (tokens[i+1] === undefined || tokens[i+1] === ',')){
-                error = `Ошибка, должно быть написано хотя бы ещё одно целое число`;
-                break;
+                error[0] = `Ошибка, должно быть написано хотя бы ещё одно целое число`;
+                error[1] = tokens[i];
+                return error;
             }
             if((/[^0-9]/).test(tokens[i]) && (tokens[i] !== 'конец' || tokens[i] !== 'слагаемого' )) {
-                error = `Ошибка, после целого не может идти какой-либо символ`;
-                break;
+                error[0] = `Ошибка, после целого не может идти какой-либо символ`;
+                error[1] = tokens[i];
+                return error;
             }
             if (isValidCel(tokens[i]) && (tokens[i+1]) === 'конец' && tokens[i-1] !== lexemes.MN.SECOND) {
                 //i--;
@@ -131,12 +145,14 @@ function parse(tokens) {
                 continue;
             }
             if(!isValidCel(tokens[i])) {
-                error = `Ошибка, неправильно написано целое число`;
-                break;
+                error[0] = `Ошибка, неправильно написано целое число`;
+                error[1] = tokens[i];
+                return error;
             }
             if (isValidCel(tokens[i]) && tokens[i+1] === undefined ) {
-                error = `Ошибка, ожидался переход в слагаемое`;
-                break;
+                error[0] = `Ошибка, ожидался переход в слагаемое`;
+                error[1] = tokens[i];
+                return error;
             } else if (isValidCel(tokens[i]) && tokens[i+1] === ',' && tokens[i-1] !== tokens[index]) {
                 tokens[index] = 'slag';
                 continue;
@@ -145,35 +161,43 @@ function parse(tokens) {
         if(tokens[index] === 'slag') {
             flagMn = true;
             if (tokens[i] === 'первое' && tokens[i] === 'второе'){
-                error = 'Ошибка, нельзя в пред блок';
-                break;
+                error[0] = 'Ошибка, нельзя вернуться из слагаемого во множество';
+                error[1] = tokens[i];
+                return error;
             }
             if(tokens[i] === lexemes.BEGIN) {
-                error = `Ошибка, из слагаемого нельзя писать терминал "начало"`;
-                break;
+                error[0] = `Ошибка, из слагаемого нельзя писать терминал "начало"`;
+                error[1] = tokens[i];
+                return error;
             }
             if(tokens[i] === lexemes.MN.FIRST || tokens[i] === lexemes.MN.SECOND && flagMn === false) {
-                error = `Ошибка, из слагаемого нельзя вернуться во множество`;
-                break;
+                error[0] = `Ошибка, из слагаемого нельзя вернуться во множество`;
+                error[1] = tokens[i];
+                return error;
             }
             if (tokens[i] && isValidCel(tokens[i-1]) && tokens[i] !== ',' && tokens[i] !== 'конец'){
-                error = `Ошибка, между целыми должна стоять запятая`;
-                break;
+                error[0] = `Ошибка, между целыми должна стоять запятая`;
+                error[1] = tokens[i];
+                return error;
             }
             if (!isValidCel(tokens[i]) && tokens[i] !== ',' && tokens[i] !== 'конец'){
-                error = `Ошибка, неправильно написано целое число`;
-                break;
+                error[0] = `Ошибка, неправильно написано целое число`;
+                error[1] = tokens[i];
+                return error;
             } else if (isValidCel(tokens[i]) && tokens[i] !== ',' && tokens[i] !== 'конец') {
-                error = `Ошибка, ожидался терминал "конец слагаемого"` // он будет всегда её выводить, так что пока всё работает нормально
+                error[0] = `Ошибка, ожидался терминал "конец слагаемого"`;
+                error[1] = tokens[i+1] ?? tokens[i];
                 continue;
             }
             if(tokens[i] === ',' && !(/[0-9]/.test(tokens[i+1]))) {
-                error = `Ошибка, после запятой должно идти целое`;
-                break
+                error[0] = `Ошибка, после запятой должно идти целое`;
+                error[1] = tokens[i];
+                return error;
             }
             if (tokens[i] === 'конец' && tokens[i+1] !== 'слагаемого') {
-                error = `Ошибка, ожидался терминал "слагаемого"`
-                break;
+                error[0] = `Ошибка, ожидался терминал "слагаемого"`
+                error[1] = tokens[i+1] ?? tokens[i];
+                return error;
             }
             if(tokens[i] === 'конец' && tokens[i+1] === 'слагаемого'){
                 tokens[index] = 'oper';
@@ -182,67 +206,80 @@ function parse(tokens) {
         }
         if(tokens[index] === 'oper') {
             if(tokens[i] === lexemes.BEGIN) {
-                error = `Ошибка, из оператора нельзя писать терминал "начало"`;
-                break;
+                error[0] = `Ошибка, из оператора нельзя писать терминал "начало"`;
+                error[1] = tokens[i];
+                return error;
             }
             if(tokens[i] === lexemes.MN.FIRST || tokens[i] === lexemes.MN.SECOND) {
-                error = `Ошибка, из оператора нельзя вернуться во множество`;
-                break;
+                error[0] = `Ошибка, из оператора нельзя вернуться во множество`;
+                error[1] = tokens[i];
+                return error;
             }
             if(tokens[i] === 'слагаемого' && tokens[i+1] === undefined){
-                error = 'Ошибка, ожидалась либо метка, либо переменаня';
-                break;
+                error[0] = 'Ошибка, ожидалась либо метка, либо переменаня';
+                error[1] = tokens[i];
+                return error;
             } else if (tokens[i] === 'слагаемого' && tokens[i+1] !== undefined){
                 continue;
             }
             if (/[0-7]:/.test(tokens[i]) && mark === true && tokens[i].length !== 1) {
-                error = 'Ошибка, может быть только одна метка';
-                break;
+                error[0] = 'Ошибка, может быть только одна метка';
+                error[1] = tokens[i];
+                return error;
             }
             if (isValidCel(tokens[i]) && mark === true) {
-                error = 'Ошибка, может быть только одна метка';
-                break;
+                error[0] = 'Ошибка, может быть только одна метка';
+                error[1] = tokens[i];
+                return error;
             }
             if(/[0-7]:/.test(tokens[i]) && tokens[i+1] === undefined){
-                error = 'Ошибка, ожидалась переменная';
-                break;
+                error[0] = 'Ошибка, ожидалась переменная';
+                error[1] = tokens[i];
+                return error;
             }
             if(tokens[i] === 'конец' && tokens[i+1] === 'слагаемого'){
-                error = 'Ошибка, из оператора нельзя вернуться в слагаемое';
-                break;
+                error[0] = 'Ошибка, из оператора нельзя вернуться в слагаемое';
+                error[1] = tokens[i];
+                return error;
             }
             if(tokens[i] === 'конец'){
-                error = 'Ошибка, терминал "конец" написан в операторе';
-                break
+                error[0] = 'Ошибка, терминал "конец" написан в операторе';
+                error[1] = tokens[i];
+                return error;
             }
             if(!isValidPer(tokens[i]) && !isValidCel(tokens[i]) && !(/[0-7]:/.test(tokens[i])) && per === false){
-                error = 'Ошибка, некорректно написана переменная';
-                break;
+                error[0] = 'Ошибка, некорректно написана переменная';
+                error[1] = tokens[i];
+                return error;
             }
             if(isValidPer(tokens[i]) && per === true ) {
-                error = 'Ошибка, в данном выражении может быть только одна переменная';
-                break;
+                error[0] = 'Ошибка, в данном выражении может быть только одна переменная';
+                error[1] = tokens[i];
+                return error;
             }
             if (isValidPer(tokens[i]) && per === false){
                 per = true;
             }
-            if(isValidPer(tokens[i])&&tokens[i+1] !=='='){
-                error=`Ошибка, после переменной должен идти знак равно`;
-                break
+            if(isValidPer(tokens[i]) && tokens[i+1] !=='='){
+                error[0] = `Ошибка, после ${tokens[i]} должен идти знак равно`;
+                error[1] = tokens[i+1] ?? tokens[i];
+                return error;
             }
             if (isValidCel(tokens[i]) && !(tokens[i]).includes(':') && mark === false) {
-                error = 'Ошибка, после метки должно стоять двуеточие';
-                break;
+                error[0] = 'Ошибка, после метки должно стоять двуеточие';
+                error[1] = tokens[i];
+                return error;
             } else if (tokens[i].includes(':') && tokens[i].length !== 1){
                 mark = true;
                 continue;
             }
             if(!isValidCel(tokens[i]) && tokens[i] !== '=' && !isValidPer(tokens[i]) && !(tokens[i]).includes(':') && !(tokens[i-1].includes(':'))){
-                error = 'Ошибка, некорректно написана метка';
-                break;
+                error[0] = 'Ошибка, некорректно написана метка';
+                error[1] = tokens[i];
+                return error;
             }
             if(tokens[i] === '='){
-                error = '';
+                error[0] = '';
                 i--;
                 tokens[index] = 'prav';
                 continue;
@@ -250,19 +287,22 @@ function parse(tokens) {
         }
         if (tokens[index] === 'prav') {
             if(tokens[i] === lexemes.BEGIN) {
-                error = `Ошибка, из правой части нельзя писать терминал "начало"`;
-                break;
+                error[0] = `Ошибка, из правой части нельзя писать терминал "начало"`;
+                error[1] = tokens[i];
+                return error;
             }
             if(tokens[i] === lexemes.MN.FIRST || tokens[i] === lexemes.MN.SECOND) {
-                error = `Ошибка, из правой части нельзя вернуться во множество`;
-                break;
+                error[0] = `Ошибка, из правой части нельзя вернуться во множество`;
+                error[1] = tokens[i];
+                return error;
             }
             if (tokens[i] === '=' && isValidPer(tokens[i-1])){
                 variable = tokens[i-1];
             }
             if(tokens[i-1] === '=' && tokens[i+1] === '='){
-                error = 'Ошибка, некорректное выражение ' + tokens[i-1] + ' ' + tokens[i] + ' ' + tokens[i+1];
-                break;
+                error[0] = 'Ошибка, некорректное выражение ' + tokens[i-1] + ' ' + tokens[i] + ' ' + tokens[i+1];
+                error[1] = tokens[i];
+                return error;
             }
             if(/[0-9]:/.test(tokens[i+1]) && !operations.includes(tokens[i]) && !functions.includes(tokens[i])){
                 mark = false;
@@ -274,12 +314,19 @@ function parse(tokens) {
                 continue;
             }
             if(functions.includes(tokens[i]) && (isValidCel(tokens[i-1]) || isValidPer(tokens[i-1]))){
-                error = `Ошибка, после ${tokens[i-1]} не может идти ${tokens[i]}`;
-                break
+                error[0] = `Ошибка, после ${tokens[i-1]} не может идти ${tokens[i]}`;
+                error[1] = tokens[i];
+                return error;
             }
             if(/[а-я][а-я0-7]*/.test(tokens[i]) && tokens[i+1] === '=' && (operations.includes(tokens[i-1]) || !functions.includes(tokens[i-1]))){
-                error = `Ошибка, после ${tokens[i-1]} должно идти либо целое, либо переменная`;
-                break;
+                error[0] = `Ошибка, после ${tokens[i-1]} должно идти либо целое, либо переменная`;
+                error[1] = tokens[i];
+                return error;
+            }
+            if(isValidPer(tokens[i]) && !newPerems.has(tokens[i]) && tokens[i] !== 'конец'){
+                error[0] = `Ошибка, ${tokens[i]} не была ещё объявлена`;
+                error[1] = tokens[i];
+                return error;
             }
             if(/[а-я][а-я0-7]*/.test(tokens[i+1]) && tokens[i] !== '=' && tokens[i+2] === '=' && !operations.includes(tokens[i]) && !functions.includes(tokens[i])){
                 mark = false;
@@ -291,8 +338,9 @@ function parse(tokens) {
                 continue;
             }
             if (tokens[i] === '=' && tokens[i+1] === undefined){
-                error = 'Ошибка, после знака "=" ожидалось выражение';
-                break
+                error[0] = 'Ошибка, после знака "=" ожидалось выражение';
+                error[1] = tokens[i];
+                return error;
             } else if(tokens[i] === '=' && tokens[i+1] !== undefined){
                 continue;
             }
@@ -302,75 +350,108 @@ function parse(tokens) {
                 //                 (operations.includes(tokens[i]) && functions.includes(tokens[i+1])) ||
                 //                 (functions.includes(tokens[i]) && operations.includes(tokens[i+1]))
             ) {
-                error = 'Ошибка, две операции не могут быть рядом друг с другом';
-                break;
+                error[0] = 'Ошибка, две операции не могут быть рядом друг с другом';
+                error[1] = tokens[i+1];
+                return error;
             }
             if((operations.includes(tokens[i]) && (tokens[i+1] === undefined || tokens[i+1] === 'конец')) || (functions.includes(tokens[i]) && (tokens[i+1] === undefined || tokens[i+1] === 'конец'))) {
-                error = `После арифметической операции ${tokens[i]} должна идти или переменная, или целое`;
-                break;
+                error[0] = `После арифметической операции ${tokens[i]} должна идти или переменная, или целое`;
+                error[1] = tokens[i+1] ?? tokens[i];
+                return error;
             }
             if ((isValidCel(tokens[i]) || isValidPer(tokens[i])) && (tokens[i+1] === undefined || !operations.includes(tokens[i+1]) && !functions.includes(tokens[i+1])) && tokens[i] !== 'конец' && tokens[i+1] !== 'конец') {
-                error = `Ошибка, после ${tokens[i]} ожидалось следующее выражение или "конец" `;
-                break;
+                error[0] = `Ошибка, после ${tokens[i]} ожидалось следующее выражение или "конец" `;
+                error[1] = tokens[i+1] ?? tokens[i];
+                return error;
             }
             if(tokens[i] !== 'конец'){
                 perem += `${tokens[i]} `;
             }
             if(tokens[i] === 'конец' && tokens[i-1] === '='){
-                error = 'Ошибка, перед концом не может стоять ' + tokens[i-1];
-                break;
+                error[0] = 'Ошибка, перед концом не может стоять ' + tokens[i-1];
+                error[1] = tokens[i-1];
+                return error;
             }
-            if(tokens[i] === 'конец' && error === '' && !operations.includes(tokens[i-1]) && !functions.includes(tokens[i-1]) && tokens[i-1] !== '='){
+            if(tokens[i] === 'конец' && !operations.includes(tokens[i-1]) && !functions.includes(tokens[i-1]) && tokens[i-1] !== '='){
                 tokens[index] = 'end';
                 i--;
                 continue
             }
 
             if((!isValidCel(tokens[i]) || !isValidPer(tokens[i])) && !operations.includes(tokens[i+1]) && !operations.includes(tokens[i]) && !functions.includes(tokens[i]) && !functions.includes(tokens[i+1]) && tokens[i] !== 'конец' && tokens[i+1] !== 'конец'){
-                error = 'Ошибка, ожидалась либо переменная, либо целое';
-                break;
+                error[0] = 'Ошибка, ожидалась либо переменная, либо целое';
+                error[1] = tokens[i];
+                return error;
             } else if (isValidCel(tokens[i]) || isValidPer(tokens[i])){
                 continue;
             }
         }
         if (tokens[index] === 'end'){
+            error = '';
             newPerems.set(variable,perem);
-            error = newPerems;
-            break;
+            // error = newPerems;
+            // break;
+            return newPerems;
         }
         console.clear();
     }
-    return error;
 }
 
-
 $('#input').bind('input', function (event) {
-    let tokens = tokenize(this.innerText);
-    let expr = parse(tokens);
-    console.log(expr);
-    // let json = JSON.stringify(Array.from(expr.entries()));
-    // fetch('http://localhost:3000/analyzeSyntax', {
-    //     method: 'POST',
-    //     headers: {
-    //         'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify({ expression: json })
-    // })
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         console.log('Результат:', data.result);
-    //         // Далее можно обработать полученный результат
-    //     })
-    //     .catch(error => {
-    //         console.error('Ошибка:', error);
-    //     });
+    $('#input').unmark(this);
+    $('#run-button').click(function () {
+        let text = $('#input').text();
+        let tokens = tokenize(text);
+        let expr = parse(tokens);
+        if(Object.prototype.toString.call(expr) === '[object Map]'){
+            let json = JSON.stringify(Array.from(expr.entries()));
+            fetch('http://localhost:3000/analyzeSyntax', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ expression: json })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Результат:', data.result);
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                });
+        } else {
+            var options = {
+                "accuracy": {
+                    "value": "exactly",
+                    "limiters": [";", "]"]
+                }
+            };
+            $('#input').unmark(this);
+            $('#input').mark(expr[1],options);
+            let inputText = $('#input').html();
+            let match = /<mark data-markjs="true">/.exec(inputText);
+            console.log(countWords($('#input').text(),expr[1]));
+            if(countWords($('#input').text(),expr[1]) >= 2) {
+                if (match[0] !== undefined) {
+                    let endIndex = match.index + match[0].length;
+                    let newText = inputText.substring(0, endIndex).replace('<mark data-markjs="true">', '') +
+                        inputText.substring(endIndex);
+                    $('#input').html(newText);
+                }
+            }
+            console.log(expr[0]);
+        }
+    })
 });
+function countWords(text, word) {
+    const wordsArray = tokenize(text);
+    let count = 0;
 
+    for (let i = 0; i < wordsArray.length; i++) {
+        if (wordsArray[i] === word) {
+            count++;
+        }
+    }
 
-
-
-
-
-
-//начало первое пер 2 конец слагаемого пер = 1 + 2 cos sin 5
-
+    return count;
+}

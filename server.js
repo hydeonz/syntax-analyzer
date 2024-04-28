@@ -14,34 +14,38 @@ app.use(express.static(__dirname + '/public'));
 // Указываем обработчик для GET запроса на корневой URL
 
 // Обработчик POST запроса для анализа синтаксиса
-app.post('/analyzeSyntax', (req, res) => {
+app.post('/analyzeSyntax', (req , res) => {
     try {
-        const expression = req.body.expression; // Получаем выражение из тела запроса
+        const expression = req.body.expression;
         let map = new Map(JSON.parse(expression));
-        console.log('Полученное выражение:', map.get('пер'));
-        let str = map.get('пер');
-        str = str.replace(/&&/g, 'and');
-        str = str.replace(/\|\|/g, 'or');
-        // Обрабатываем выражение
-        const parser = new Parser();
-        const result = parser.evaluate(str);
-        console.log(result);
+        const keys = Array.from(map.keys());
+        keys.forEach(function (key) {
+            let value = map.get(key);
+            const parser = new Parser();
 
-        // Отправляем результат обратно на клиент
-        res.json({ result });
+            value = value.replace(/&&/g, 'and');
+            value = value.replace(/\|\|/g, 'or');
+
+            if (keys.some(k => value.includes(k))) {
+                keys.forEach(function (k) {
+                    value = value.replace(new RegExp(k, 'g'), map.get(k));
+                });
+                map.set(key, parser.evaluate(value));
+            } else {
+                map.set(key, parser.evaluate(value));
+            }
+        });
+        console.log(map);
+        //res.json({ result });
     } catch (error) {
         console.error('Ошибка при обработке запроса:', error);
         res.status(500).json({ error: 'Произошла ошибка при обработке запроса' });
     }
 });
 
-// Указываем обработчик для GET запроса на корневой URL
 app.get('/', (req, res) => {
-    // Отправляем файл index.html
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-
-// Запускаем сервер на порту 3000
 app.listen(3000, () => {
     console.log('Сервер запущен на порту 3000');
 });
