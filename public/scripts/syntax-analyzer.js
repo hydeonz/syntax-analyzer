@@ -10,7 +10,7 @@ const functions = ['sin','cos','abs']
 
 function tokenize(str)
 {
-    return str.split(/(?<=[,=/*-+!])|(?=[,=/*-+!])|(?=&{2})|(?=\|{2})|(?=sin[0-7]+)|(?=cos[0-7]+)|(?=abs[0-7]+)|\s+/).map(function (token) {
+    return str.split(/(?<=[,=/*-+!])|(?=[,=/*-+!])|(?=&{2})|(?=\|{2})|(?=sin[0-7]+)|(?=cos[0-7]+)|(?=abs[0-7]+)|\s+|\n/).map(function (token) {
         return token.trim().toLowerCase();
     }).filter(function (token) {
         return token !== '';
@@ -118,7 +118,7 @@ function parse(tokens) {
             index = i;
             if ((lexemes.MN.SECOND === tokens[i] && tokens[i+1] === undefined) || (lexemes.MN.SECOND === tokens[i] && !isValidCel(tokens[i+1])) && tokens[index] !== 'slag') {
                 error[0] = `Ошибка, после ${tokens[index]} ожидалось целое`;
-                error[1] = tokens[index];
+                error[1] = tokens[i+1] ?? tokens[index];
                 return error;
             }
             continue;
@@ -131,11 +131,11 @@ function parse(tokens) {
             }
             if((tokens[i-1] === tokens[index]) && (tokens[i+1] === undefined || tokens[i+1] === ',')){
                 error[0] = `Ошибка, должно быть написано хотя бы ещё одно целое число`;
-                error[1] = tokens[i];
+                error[1] = tokens[i+1] ?? tokens[i];
                 return error;
             }
             if((/[^0-9]/).test(tokens[i]) && (tokens[i] !== 'конец' || tokens[i] !== 'слагаемого' )) {
-                error[0] = `Ошибка, после целого не может идти какой-либо символ`;
+                error[0] = `Ошибка, после целого не может идти какое-либо выражение`;
                 error[1] = tokens[i];
                 return error;
             }
@@ -184,9 +184,12 @@ function parse(tokens) {
                 error[0] = `Ошибка, неправильно написано целое число`;
                 error[1] = tokens[i];
                 return error;
-            } else if (isValidCel(tokens[i]) && tokens[i] !== ',' && tokens[i] !== 'конец') {
+            }
+            if (isValidCel(tokens[i]) && tokens[i] !== ',' && tokens[i+1] !== ',' && tokens[i] !== 'конец' && tokens[i+1] !== 'конец') {
                 error[0] = `Ошибка, ожидался терминал "конец слагаемого"`;
-                error[1] = tokens[i+1] ?? tokens[i];
+                error[1] = tokens[i];
+                return error;
+            } else if (isValidCel(tokens[i]) && tokens[i] !== ',' && (tokens[i] === 'конец' || tokens[i+1] === 'конец')){
                 continue;
             }
             if(tokens[i] === ',' && !(/[0-9]/.test(tokens[i+1]))) {
@@ -216,7 +219,7 @@ function parse(tokens) {
                 return error;
             }
             if(tokens[i] === 'слагаемого' && tokens[i+1] === undefined){
-                error[0] = 'Ошибка, ожидалась либо метка, либо переменаня';
+                error[0] = 'Ошибка, ожидалась либо метка, либо переменная';
                 error[1] = tokens[i];
                 return error;
             } else if (tokens[i] === 'слагаемого' && tokens[i+1] !== undefined){
@@ -396,53 +399,65 @@ function parse(tokens) {
         console.clear();
     }
 }
-
-$('#input').bind('input', function (event) {
-    $('#input').unmark(this);
-    $('#run-button').click(function () {
-        let text = $('#input').text();
-        let tokens = tokenize(text);
-        let expr = parse(tokens);
-        if(Object.prototype.toString.call(expr) === '[object Map]'){
-            let json = JSON.stringify(Array.from(expr.entries()));
-            fetch('http://localhost:3000/analyzeSyntax', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ expression: json })
+$('#run-button').click(function () {
+    $('#input').unmark();
+    let text = $('#input').text();
+    let tokens = tokenize(text);
+    let expr = parse(tokens);
+    if(Object.prototype.toString.call(expr) === '[object Map]'){
+        $('#output').text('');
+        $('#input').unmark();
+        let json = JSON.stringify(Array.from(expr.entries()));
+        fetch('http://localhost:3000/analyzeSyntax', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ expression: json })
+        })
+            .then(response => response.json())
+            .then(data => {
+                $('#output').text('Результат: ' + data.result);
             })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Результат:', data.result);
-                })
-                .catch(error => {
+            .catch(error => {
                     console.error('Ошибка:', error);
-                });
+            });
+    } else {
+        $('#output').text('');
+        let options = {};
+        if (expr[1] === ',' || expr[1] ==='=' || expr[1] === '@' || expr[1] === '+' || expr[1] === '-' || expr[1] === '/' || expr[1] === '*' ||
+            expr[1] === '!' || expr[1] === '' || expr[1] === '$' || expr[1] === '&&' || expr[1] === '||'){
+            options = {
+                "accuracy": {
+                    "value": "partially",
+                    "limiters": ["'", "`"],
+                },
+            };
         } else {
-            var options = {
+            options = {
                 "accuracy": {
                     "value": "exactly",
-                    "limiters": [";", "]"]
-                }
+                    "limiters": ["'", "`"],
+                },
             };
-            $('#input').unmark(this);
-            $('#input').mark(expr[1],options);
+        }
+        $('#input').unmark();
+        $('#input').mark(expr[1],options);
+        for (let i = 0; i < countWords($('#input').text(),expr[1])-1;i++){
             let inputText = $('#input').html();
             let match = /<mark data-markjs="true">/.exec(inputText);
-            console.log(countWords($('#input').text(),expr[1]));
-            if(countWords($('#input').text(),expr[1]) >= 2) {
-                if (match[0] !== undefined) {
-                    let endIndex = match.index + match[0].length;
-                    let newText = inputText.substring(0, endIndex).replace('<mark data-markjs="true">', '') +
-                        inputText.substring(endIndex);
-                    $('#input').html(newText);
-                }
+            if (match !== null && match[0] !== undefined) {
+                let endIndex = match.index + match[0].length;
+                let newText = inputText.substring(0, endIndex).replace('<mark data-markjs="true">', '') +
+                    inputText.substring(endIndex);
+                $('#input').html(newText);
             }
-            console.log(expr[0]);
+            match = /<mark data-markjs="true">/.exec($('#input').text());
         }
-    })
+        $('#output').text(expr[0]);
+    }
 });
+
 function countWords(text, word) {
     const wordsArray = tokenize(text);
     let count = 0;

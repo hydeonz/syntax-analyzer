@@ -56,16 +56,32 @@
         #run-button:hover {
             background-color: #45a049;
         }
+        #output {
+            width: 600px;
+            height: 300px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 20px;
+            background-color: #f9f9f9;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+        }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mark.js@8.11.1/dist/jquery.mark.min.js"></script>
 </head>
 <body>
 <div id="container">
+    <div id="output">
+
+    </div>
     <div contenteditable="true" id="input"></div>
     <div id="syntax-description">
-        Язык = "Начало" мн...мн слагаемое(оно одно, это важно), опер...опер "Конец"<br>
-        Мн = "Первое" переменнпя... "," переременная ! "Второе" целое...целое<br>
+        Язык = "Начало" мн...мн слагаемое, опер...опер "Конец"<br>
+        Мн = "Первое" переменная... "," переременная ! "Второе" целое...целое<br>
         Слагаемое = цел..."," цел "Конец слагаемого"<br>
         опер = &lt;/ целое ":" /&gt; переменная = прав.ч. <br>
         прав.ч = &lt/ "-"/&gt блок1["+"!"-"]...блок1<br>

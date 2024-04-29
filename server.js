@@ -36,7 +36,9 @@ app.post('/analyzeSyntax', (req , res) => {
             }
         });
         console.log(map);
-        //res.json({ result });
+        const lastKey = keys[keys.length - 1];
+        const lastValue = map.get(lastKey);
+        res.json({ result: lastValue  });
     } catch (error) {
         console.error('Ошибка при обработке запроса:', error);
         res.status(500).json({ error: 'Произошла ошибка при обработке запроса' });
