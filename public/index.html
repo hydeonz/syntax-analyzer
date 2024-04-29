@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #container {
+            display: flex;
+            align-items: flex-start;
+        }
+        #input {
+            display: inline-block;
+            width: 300px;
+            height: 300px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            outline: none;
+            overflow-y: auto;
+            resize: vertical;
+        }
+        #syntax-description {
+            display: inline-block;
+            margin: 20px;
+            flex-grow: 1;
+        }
+        mark {
+            background: orange;
+            color: black;
+
+        }
+        #run-button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+            margin-left: -600px;
+        }
+        #run-button:hover {
+            background-color: #45a049;
+        }
+        #output {
+            width: 600px;
+            height: 300px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 20px;
+            background-color: #f9f9f9;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mark.js@8.11.1/dist/jquery.mark.min.js"></script>
+</head>
+<body>
+<div id="container">
+    <div id="output">
+
+    </div>
+    <div contenteditable="true" id="input"></div>
+    <div id="syntax-description">
+        Язык = "Начало" мн...мн слагаемое, опер...опер "Конец"<br>
+        Мн = "Первое" переменная... "," переременная ! "Второе" целое...целое<br>
+        Слагаемое = цел..."," цел "Конец слагаемого"<br>
+        опер = &lt;/ целое ":" /&gt; переменная = прав.ч. <br>
+        прав.ч = &lt/ "-"/&gt блок1["+"!"-"]...блок1<br>
+        блок1 = блок2["*"!"/"]...блок2<br>
+        блок2 = блок3["&&"!"||"]...блок3<br>
+        блок3 = &lt;/not/&gt; блок4 <br>
+        блок4 = &lt; /функция...функция/&gt; переменная ! цел <br>
+        переменная = буква &lt;/с...с/&gt;<br>
+        с = буква ! цифра<br>
+        целое = цифра ... цифра<br>
+        цифра = "0" ! "1" ! "2" ! ... ! "7" <br>
+        буква = "А" ! "Б" ! "В" ! ... ! "Я" <br>
+        функция = sin ! cos! abs <br>
+    </div>
+</div>
+<button id="run-button">Запустить код</button>
+<script src="scripts/syntax-analyzer.js"></script>
+</body>
+</html>
