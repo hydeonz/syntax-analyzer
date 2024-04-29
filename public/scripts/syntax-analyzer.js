@@ -99,7 +99,7 @@ function parse(tokens) {
                 return error;
             }
             if (!isValidPer(tokens[i]) && tokens[i] !== ',') {
-                error[0] = `Ошибка, неправильно написанная переменная`;
+                error[0] = `Ошибка, неправильно написанная переменная ${tokens[i]}`;
                 error[1] = tokens[i];
                 return error;
             }
@@ -180,14 +180,19 @@ function parse(tokens) {
                 error[1] = tokens[i];
                 return error;
             }
+            if (tokens[i] && tokens[i+1] !== undefined && isValidCel(tokens[i+1]) && tokens[i] !== ',' && tokens[i] !== 'конец'){
+                error[0] = `Ошибка, между целыми должна стоять запятая`;
+                error[1] = tokens[i];
+                return error;
+            }
             if (!isValidCel(tokens[i]) && tokens[i] !== ',' && tokens[i] !== 'конец'){
                 error[0] = `Ошибка, неправильно написано целое число`;
                 error[1] = tokens[i];
                 return error;
             }
             if (isValidCel(tokens[i]) && tokens[i] !== ',' && tokens[i+1] !== ',' && tokens[i] !== 'конец' && tokens[i+1] !== 'конец') {
-                error[0] = `Ошибка, ожидался терминал "конец слагаемого"`;
-                error[1] = tokens[i];
+                error[0] = `Ошибка, после ${tokens[i]} ожидался либо терминал "конец слагаемого", либо ","`;
+                error[1] = tokens[i+1] || tokens[i] ;
                 return error;
             } else if (isValidCel(tokens[i]) && tokens[i] !== ',' && (tokens[i] === 'конец' || tokens[i+1] === 'конец')){
                 continue;
@@ -199,7 +204,7 @@ function parse(tokens) {
             }
             if (tokens[i] === 'конец' && tokens[i+1] !== 'слагаемого') {
                 error[0] = `Ошибка, ожидался терминал "слагаемого"`
-                error[1] = tokens[i+1] ?? tokens[i];
+                error[1] = tokens[i+1] || tokens[i] ;
                 return error;
             }
             if(tokens[i] === 'конец' && tokens[i+1] === 'слагаемого'){
@@ -437,7 +442,8 @@ $('#run-button').click(function () {
             options = {
                 "accuracy": {
                     "value": "exactly",
-                    "limiters": ["'", "`"],
+                    "limiters": [",", "="],
+
                 },
             };
         }
