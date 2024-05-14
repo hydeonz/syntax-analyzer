@@ -10,7 +10,7 @@ const functions = ['sin','cos','abs']
 
 function tokenize(str)
 {
-    str = str.replaceAll(/(=|sin|cos|abs|not|or|and|\+|-|\*|\/|,|[А-я]+[0-9]+|[0-9]+|[A-z]+[0-9]+)/g," $1 ");
+    str = str.replaceAll(/(:|=|sin|cos|abs|not|or|and|\+|-|\*|\/|,|[А-я]+[0-9]+|[0-9]+|[A-z]+[0-9]+)/g," $1 ");
     return str.split(/(?<=[,=/*\-+!])|(?=[,=/*\-+!])|(?=&{2})|(?=\|{2})|(?=sin[0-9]+)|(?=cos[0-9]+)|(?=abs[0-9]+)|(?=sin[А-я]+[0-9]+)|(?=cos[А-я]+[0-9]+)|(?=abs[А-я]+[0-9]+)|(?=sin[A-z]+[0-9]+)|(?=cos[A-z]+[0-9]+)|(?=abs[A-z]+[0-9]+)|\s+|\n/).map(function (token) {
         //("/:|=|sin|cos|abs|not|or|and|\+|-|\*|\/|,|[а-я]+[0-9]+|[0-9]+)\s?/")
         return token.trim().toLowerCase();
@@ -44,13 +44,6 @@ function parse(tokens) {
     let flagBegin = false;
     const newPerems = new Map();
     let variable = '';
-    let countMinus;
-    let countPlus;
-    let countMul;
-    let countDiv;
-    let countAnd;
-    let countOr;
-    let countNot;
     for (let i = 0; i < tokens.length; i++) {
         // console.clear();
         if (i === 0 && lexemes.BEGIN !== tokens[0] && flagBegin === false) {
@@ -318,6 +311,24 @@ function parse(tokens) {
             }
         }
         if (tokens[index] === 'prav') {
+            if(isValidCel(tokens[i]) && tokens[i+1] === ':' && !operations.includes(tokens[i]) && !functions.includes(tokens[i])){
+                mark = false;
+                per = false;
+                perem += `${tokens[i]}`;
+                tokens[index] = 'oper';
+                newPerems.set(variable,perem);
+                perem = '';
+                continue;
+            }
+            if(/[а-я][а-я0-7]*/.test(tokens[i+1]) && tokens[i] !== '=' && tokens[i+2] === '=' && !operations.includes(tokens[i]) && !functions.includes(tokens[i])){
+                mark = false;
+                per = false;
+                perem += `${tokens[i]}`;
+                newPerems.set(variable,perem);
+                perem = '';
+                tokens[index] = 'oper';
+                continue;
+            }
             if (functions.includes(tokens[i]) && tokens[i+1] === '!'){
                 continue;
             }
@@ -327,12 +338,12 @@ function parse(tokens) {
                 return error;
 
             }
-            if(tokens[i+1] !== undefined && tokens[i+2] !== undefined && functions.includes(tokens[i]) && isValidCel(tokens[i+1]) && tokens[i+2] !== '!' && tokens[i+2] !== 'конец' && !operations.includes(tokens[i+2])){
-                // /sin[0-9]+/.test(tokens[i]) && (functions.includes(tokens[i+1]) || tokens[i+1] === '!')
-                error[0] = `Ошибка: После ${tokens[i+1]} не может идти ${tokens[i+2]}`;
-                error[1] = tokens[i+2];
-                return error;
-            }
+            // if(tokens[i+1] !== undefined && tokens[i+2] !== undefined && functions.includes(tokens[i]) && !isValidCel(tokens[i+1]) && tokens[i+2] !== '!' && tokens[i+2] !== 'конец' && !operations.includes(tokens[i+2])){
+            //     // /sin[0-9]+/.test(tokens[i]) && (functions.includes(tokens[i+1]) || tokens[i+1] === '!')
+            //     error[0] = `Ошибка: После ${tokens[i+1]} не может идти ${tokens[i+2]}`;
+            //     error[1] = tokens[i+2];
+            //     return error;
+            // }
             if(isValidCel(tokens[i]) && tokens[i+1] === '!'){
                 error[0] = `Ошибка: После ${tokens[i]} не может идти ${tokens[i+1]}`;
                 error[1] = tokens[i+1];
@@ -372,15 +383,6 @@ function parse(tokens) {
                 error[1] = tokens[i];
                 return error;
             }
-            if(/[0-9]:/.test(tokens[i+1]) && !operations.includes(tokens[i]) && !functions.includes(tokens[i])){
-                mark = false;
-                per = false;
-                perem += `${tokens[i]}`;
-                tokens[index] = 'oper';
-                newPerems.set(variable,perem);
-                perem = '';
-                continue;
-            }
             if(functions.includes(tokens[i]) && (isValidCel(tokens[i-1]) || isValidPer(tokens[i-1]))){
                 error[0] = `Ошибка, после ${tokens[i-1]} не может идти ${tokens[i]}`;
                 error[1] = tokens[i];
@@ -396,15 +398,7 @@ function parse(tokens) {
                 error[1] = tokens[i];
                 return error;
             }
-            if(/[а-я][а-я0-7]*/.test(tokens[i+1]) && tokens[i] !== '=' && tokens[i+2] === '=' && !operations.includes(tokens[i]) && !functions.includes(tokens[i])){
-                mark = false;
-                per = false;
-                perem += `${tokens[i]}`;
-                newPerems.set(variable,perem);
-                perem = '';
-                tokens[index] = 'oper';
-                continue;
-            }
+
             if (tokens[i] === '=' && tokens[i+1] === undefined){
                 error[0] = 'Ошибка: Ожидалось выражение';
                 error[1] = tokens[i];
@@ -423,7 +417,7 @@ function parse(tokens) {
                 return error;
             }
             if((operations.includes(tokens[i]) && (tokens[i+1] === undefined || tokens[i+1] === 'конец')) || (functions.includes(tokens[i]) && (tokens[i+1] === undefined || tokens[i+1] === 'конец'))) {
-                error[0] = `Ошибка: После арифметической операции может быть или переменная, или целое`;
+                error[0] = `Ошибка: После операции может быть или переменная, или целое`;
                 error[1] = tokens[i+1] ?? tokens[i];
                 return error;
             }
@@ -498,7 +492,7 @@ $('#run-button').click(function () {
         $('#output').text('');
         let options = {};
         if (expr[1] === ',' || expr[1] ==='=' || expr[1] === '@' || expr[1] === '+' || expr[1] === '-' || expr[1] === '/' || expr[1] === '*' ||
-            expr[1] === '!' || expr[1] === '' || expr[1] === '$' || expr[1] === '&&' || expr[1] === '||'){
+            expr[1] === '!' || expr[1] === '' || expr[1] === '$' || expr[1] === '&&' || expr[1] === '||' || expr[1] === ':'){
             options = {
                 "accuracy": {
                     "value": "partially",

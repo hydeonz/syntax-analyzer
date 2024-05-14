@@ -18,17 +18,17 @@
             align-items: flex-start;
         }
         #input {
-            display: inline-block;
-            width: 300px;
+            width: 600px;
             height: 300px;
             border: 1px solid #ccc;
             padding: 10px;
             margin: 20px;
-            background-color: #fff;
+            background-color: #f9f9f9;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            outline: none;
             overflow-y: auto;
-            resize: vertical;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
         }
         #syntax-description {
             display: inline-block;
@@ -36,8 +36,8 @@
             flex-grow: 1;
         }
         mark {
-            background: orange;
-            color: black;
+            background-color: white;
+            color: red;
 
         }
         #run-button {
@@ -57,17 +57,17 @@
             background-color: #45a049;
         }
         #output {
-            width: 600px;
+            display: inline-block;
+            width: 300px;
             height: 300px;
             border: 1px solid #ccc;
             padding: 10px;
             margin: 20px;
-            background-color: #f9f9f9;
+            background-color: #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            outline: none;
             overflow-y: auto;
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-            line-height: 1.6;
+            resize: vertical;
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -87,7 +87,7 @@
         прав.ч = &lt/ "-"/&gt блок1["+"!"-"]...блок1<br>
         блок1 = блок2["*"!"/"]...блок2<br>
         блок2 = блок3["&&"!"||"]...блок3<br>
-        блок3 = &lt;/not/&gt; блок4 <br>
+        блок3 = &lt;/!/&gt; блок4 <br>
         блок4 = &lt; /функция...функция/&gt; переменная ! цел <br>
         переменная = буква &lt;/с...с/&gt;<br>
         с = буква ! цифра<br>
