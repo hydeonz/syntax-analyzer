@@ -23,8 +23,13 @@ app.post('/analyzeSyntax', (req , res) => {
             let value = map.get(key);
             const parser = new Parser();
 
-            value = value.replace(/&&/g, 'and');
-            value = value.replace(/\|\|/g, 'or');
+            value = value.replace(/&&/g, 'and ');
+            value = value.replace(/\|\|/g, 'or ');
+            value = value.replace(/!/g, 'not ');
+            value = value.replace(/(sin)(\d+)/g, '$1 $2');
+            console.log(value);
+            value = value.replace(/cos(\d+)/g, 'cos $1');
+            value = value.replace(/abs(\d+)/g, 'abs $1');
 
             if (keys.some(k => value.includes(k))) {
                 keys.forEach(function (k) {
@@ -36,11 +41,9 @@ app.post('/analyzeSyntax', (req , res) => {
             }
         });
         console.log(map);
-        const lastKey = keys[keys.length - 1];
-        const lastValue = map.get(lastKey);
-        res.json({ result: lastValue  });
+        res.json({ result: Array.from(map.entries()) });
     } catch (error) {
-        console.error('Ошибка при обработке запроса:', error);
+        console.error('Ошибка при обработке запроса:', map);
         res.status(500).json({ error: 'Произошла ошибка при обработке запроса' });
     }
 });
