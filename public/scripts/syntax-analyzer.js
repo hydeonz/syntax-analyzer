@@ -339,6 +339,12 @@ function parse(tokens) {
             if (tokens[i-1] === '=' && tokens[i] === '-'){
                 continue;
             }
+            if (tokens[i-1] === '=' && (tokens[i] === '/' || tokens[i] === '*' || tokens[i] === '&&' || tokens[i] === '||' || tokens[i] === '+')){
+                error[0] = "Ошибка: Ожидалась переменная, либо целое, либо функция, либо '!'";
+                error[1] = tokens[i+1];
+                error[2] = i;
+                return error;
+            }
             if((isValidCel(tokens[i]) || isValidPer(tokens[i])) && tokens[i+1] === '!'){
                 error[0] = "Ошибка: ожидалась операция, кроме '!' ";
                 error[1] = tokens[i+1];
